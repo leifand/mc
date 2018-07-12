@@ -10,24 +10,48 @@ const StringDecoder = require('string_decoder').StringDecoder;
 
 const server = http.createServer(function(req,res){
     //get url
-    let parsedUrl = url.parse(req.url, true);
+    var parsedUrl = url.parse(req.url, true);
     //get path
-    let path = parsedUrl.pathname;
-    let trimmedPath = path.replace(/^\/+|\/+$/g,'');
+    var path = parsedUrl.pathname;
+    var trimmedPath = path.replace(/^\/+|\/+$/g,'');
     // get query string as an obj
-    let queryStringObj = parsedUrl.query;
-    // get header as obj
-    let headers = req.headers;
-    let decoder = new StringDecoder('utf-8')
+    var queryStringObj = parsedUrl.query;
     // get http method
-    let method = req.method.toLowerCase();
-    //send response
-    res.end('yo bro');
-    // log path
-    console.log('path: '+trimmedPath+'method: '+method+'query: ', queryStringObj);
-    console.log('header: ', headers);
+    var method = req.method.toLowerCase();    
+    // get header as obj
+    var headers = req.headers;
+    //get payload if it exists
+    var decoder = new StringDecoder('utf-8');
+    var buffer = '';
+    req.on('data', function(data){
+        buffer += decoder.write(data);
+    });
+    req.on('end', function(){
+        buffer += decoder.end();
+        //send response
+        res.end('yo bro');
+        // log path
+        console.log('path: '+trimmedPath+'method: '+method+'query: ', queryStringObj);
+        console.log('header: ', headers);
+        console.log('payload aquired: ',buffer);
+    });
 });
 
 server.listen(3000, function(){
     console.log('SERVER RUNNING ON PORT 3000');
 });
+
+// handlers
+const handlers = {};
+handlers.sample = function(data, callback){
+    // callback http status code
+    // payload (object)
+    callback(406,{'name':'sample handler'});
+};
+handlers.notFound = function(data, callback){
+    callback(404);
+};
+// our req router
+const router = {
+    'sample' : handlers.sample
+};
