@@ -7,6 +7,7 @@
 const http = require('http');
 const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
+const config = require('./config');
 
 const server = http.createServer(function(req,res){
     //get url
@@ -45,6 +46,7 @@ const server = http.createServer(function(req,res){
             payload  = typeof(payload) == 'object' ? payload : {};
             var payloadString = JSON.stringify(payload);
             //send response
+            res.setHeader('Content-Type','application/json');
             res.writeHead(statusCode);
             res.end(payloadString);
             // log
@@ -53,8 +55,8 @@ const server = http.createServer(function(req,res){
     });
 });
 
-server.listen(3000, function(){
-    console.log('SERVER RUNNING ON PORT 3000');
+server.listen(config.port, function(){
+    console.log('SERVER RUNNING ON PORT:'+config.port+' in '+config.envName+' mode');
 });
 
 // handlers
