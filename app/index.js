@@ -28,12 +28,28 @@ const server = http.createServer(function(req,res){
     });
     req.on('end', function(){
         buffer += decoder.end();
-        //send response
-        res.end('yo bro');
-        // log path
-        console.log('path: '+trimmedPath+'method: '+method+'query: ', queryStringObj);
-        console.log('header: ', headers);
-        console.log('payload aquired: ',buffer);
+        // choose handler
+        var chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
+        var data = {
+            'trimmedPath' : trimmedPath,
+            'queryStringObj' : queryStringObj,
+            'method' : method,
+            'headers' : headers,
+            'payload' : buffer
+        };
+        // route request to handler specified
+        chosenHandler(data,function(statusCode, payload){
+            //default status code
+            statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
+            //default payload 
+            payload  = typeof(payload) == 'object' ? payload : {};
+            var payloadString = JSON.stringify(payload);
+            //send response
+            res.writeHead(statusCode);
+            res.end(payloadString);
+            // log
+            console.log('response: ',statusCode, payloadString);
+        });
     });
 });
 
