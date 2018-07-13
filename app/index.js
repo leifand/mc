@@ -5,11 +5,35 @@
 */
 
 const http = require('http');
+const https = require('https');
 const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
 const config = require('./config');
+const fs = require('fs');
 
-const server = http.createServer(function(req,res){
+// instantiate servers
+const httpServer = http.createServer(function(req,res){
+    unifiedServer(req,res);
+});
+const httpsServerOptions = {
+    'key':fs.readFileSync('./https/key.pem'),
+    'cert':fs.readFileSync('./https/cert.pem')
+};
+const httpsServer = https.createServer(httpsServerOptions,function(req,res){
+    unifiedServer(req,res);
+});
+
+// start servers
+httpServer.listen(config.httpPort, function(){
+    console.log('SERVER RUNNING ON PORT:'+config.httpPort+' in '+config.envName+' mode');
+});
+
+httpsServer.listen(config.httpsPort, function(){
+    console.log('SERVER RUNNING ON PORT:'+config.httpsPort+' in '+config.envName+' mode');
+});
+
+// server logic for http and https
+const unifiedServer = function(req,res){
     //get url
     var parsedUrl = url.parse(req.url, true);
     //get path
@@ -53,11 +77,7 @@ const server = http.createServer(function(req,res){
             console.log('response: ',statusCode, payloadString);
         });
     });
-});
-
-server.listen(config.port, function(){
-    console.log('SERVER RUNNING ON PORT:'+config.port+' in '+config.envName+' mode');
-});
+};
 
 // handlers
 const handlers = {};
@@ -66,10 +86,15 @@ handlers.sample = function(data, callback){
     // payload (object)
     callback(406,{'name':'sample handler'});
 };
+handlers.ping = function(data, callback){
+    callback(200);
+};
 handlers.notFound = function(data, callback){
     callback(404);
 };
+
 // our req router
 const router = {
-    'sample' : handlers.sample
+    'sample':handlers.sample,
+    'ping':handlers.ping
 };
