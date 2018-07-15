@@ -1,7 +1,8 @@
 /* 
 * Data Library
 * simple storage and editing 
-*
+* Leif Anderson
+* July 14, 2018
 */
 
 // dependencies
@@ -23,25 +24,32 @@ lib.create = (dir,file,data,callback) => {
     fs.open(lib.baseDir+dir+'/'+file+'.json','wx',(err,fileDescriptor) => {
         
         if(!err && fileDescriptor) {
+            
             let stringData = JSON.stringify(data);
             fs.writeFile(fileDescriptor,stringData, (err) => {
                 
                 if(!err) {
+                    
                     fs.close(fileDescriptor, (err) => {
                         
                         if(!err) {
+                            
                             callback(false); // success
+
                         } else {
+                            
                             callback('error closing new file');
                         }
                     });
 
                 } else {
+                    
                     callback('error writing to new file');
                 }
             });
 
         } else {
+            
             callback('could not create new file, it may already exist');
         }    
     });
@@ -57,32 +65,42 @@ lib.update = (dir,file,data,callback) => {
     fs.open(lib.baseDir+dir+'/'+file+'.json','r+', (err,fileDescriptor) => {
         
         if(!err && fileDescriptor) {
+            
             let stringData = JSON.stringify(data);
             fs.truncate(fileDescriptor, (err) => {
 
                 if(!err) {
+                    
                     fs.writeFile(fileDescriptor,stringData, (err) => {
 
                         if(!err) {
+                           
                             fs.close(fileDescriptor, (err) => {
 
                                 if(!err) {
+                                    
                                     callback(false);
+
                                 } else {
-                                    callback('file close ERROR!!!1');
+                                    
+                                    callback('file close ERROR!!!1'); // alfred e. newman is reincarnated if this occurs xD
                                 }
                             });
                             
                         } else {
+                            
                             callback('error writing to existing file');
                         }
                     });
+
                 } else {
+                    
                     callback('truncation error');
                 }
             });
 
         } else {
+            
             callback('could not update, file may not exist');
         }
     });

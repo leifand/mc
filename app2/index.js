@@ -8,32 +8,34 @@ const http = require('http');
 const https = require('https');
 const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
-const config = require('./config');
+const config = require('./lib/config');
 const fs = require('fs');
+const handlers = require('./lib/handlers');
+const helpers = require('./lib/helpers');
 
 // instantiate servers
-const httpServer = http.createServer(function(req,res){
+const httpServer = http.createServer((req,res) => {
     unifiedServer(req,res);
 });
 const httpsServerOptions = {
     'key':fs.readFileSync('./https/key.pem'),
     'cert':fs.readFileSync('./https/cert.pem')
 };
-const httpsServer = https.createServer(httpsServerOptions,function(req,res){
+const httpsServer = https.createServer(httpsServerOptions,(req,res) => {
     unifiedServer(req,res);
 });
 
 // start servers
-httpServer.listen(config.httpPort, function(){
+httpServer.listen(config.httpPort, () => {
     console.log('SERVER RUNNING ON PORT:'+config.httpPort+' in '+config.envName+' mode');
 });
 
-httpsServer.listen(config.httpsPort, function(){
+httpsServer.listen(config.httpsPort, () => {
     console.log('SERVER RUNNING ON PORT:'+config.httpsPort+' in '+config.envName+' mode');
 });
 
 // server logic for http and https
-const unifiedServer = function(req,res){
+const unifiedServer = (req,res) => {
     //get url
     var parsedUrl = url.parse(req.url, true);
     //get path
@@ -48,10 +50,10 @@ const unifiedServer = function(req,res){
     //get payload if it exists
     var decoder = new StringDecoder('utf-8');
     var buffer = '';
-    req.on('data', function(data){
+    req.on('data', (data) => {
         buffer += decoder.write(data);
     });
-    req.on('end', function(){
+    req.on('end', () => {
         buffer += decoder.end();
         // choose handler
         var chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
@@ -60,10 +62,10 @@ const unifiedServer = function(req,res){
             'queryStringObj' : queryStringObj,
             'method' : method,
             'headers' : headers,
-            'payload' : buffer
+            'payload' : helpers.parseJSONtoObj(buffer)
         };
         // route request to handler specified
-        chosenHandler(data,function(statusCode, payload){
+        chosenHandler(data,(statusCode, payload) => {
             //default status code
             statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
             //default payload 
@@ -79,22 +81,9 @@ const unifiedServer = function(req,res){
     });
 };
 
-// handlers
-const handlers = {};
-handlers.sample = function(data, callback){
-    // callback http status code
-    // payload (object)
-    callback(406,{'name':'sample handler'});
-};
-handlers.ping = function(data, callback){
-    callback(200);
-};
-handlers.notFound = function(data, callback){
-    callback(404);
-};
-
 // our req router
 const router = {
     'sample':handlers.sample,
-    'ping':handlers.ping
+    'ping':handlers.ping,
+    'users':handlers.users
 };
