@@ -37,27 +37,27 @@ httpsServer.listen(config.httpsPort, () => {
 // server logic for http and https
 const unifiedServer = (req,res) => {
     //get url
-    var parsedUrl = url.parse(req.url, true);
+    const parsedUrl = url.parse(req.url, true);
     //get path
-    var path = parsedUrl.pathname;
-    var trimmedPath = path.replace(/^\/+|\/+$/g,'');
+    const path = parsedUrl.pathname;
+    const trimmedPath = path.replace(/^\/+|\/+$/g,'');
     // get query string as an obj
-    var queryStringObj = parsedUrl.query;
+    const queryStringObj = parsedUrl.query;
     // get http method
-    var method = req.method.toLowerCase();    
+    const method = req.method.toLowerCase();    
     // get header as obj
-    var headers = req.headers;
+    const headers = req.headers;
     //get payload if it exists
-    var decoder = new StringDecoder('utf-8');
-    var buffer = '';
+    const decoder = new StringDecoder('utf-8');
+    let buffer = '';
     req.on('data', (data) => {
         buffer += decoder.write(data);
     });
     req.on('end', () => {
         buffer += decoder.end();
         // choose handler
-        var chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
-        var data = {
+        const chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
+        const data = {
             'trimmedPath' : trimmedPath,
             'queryStringObj' : queryStringObj,
             'method' : method,
@@ -70,7 +70,7 @@ const unifiedServer = (req,res) => {
             statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
             //default payload 
             payload  = typeof(payload) == 'object' ? payload : {};
-            var payloadString = JSON.stringify(payload);
+            const payloadString = JSON.stringify(payload);
             //send response
             res.setHeader('Content-Type','application/json');
             res.writeHead(statusCode);
@@ -82,6 +82,7 @@ const unifiedServer = (req,res) => {
 };
 
 // our req router
+//
 const router = {
     'sample':handlers.sample,
     'ping':handlers.ping,

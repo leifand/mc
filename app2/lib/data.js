@@ -25,7 +25,7 @@ lib.create = (dir,file,data,callback) => {
         
         if(!err && fileDescriptor) {
             
-            let stringData = JSON.stringify(data);
+            const stringData = JSON.stringify(data);
             fs.writeFile(fileDescriptor,stringData, (err) => {
                 
                 if(!err) {
@@ -49,7 +49,7 @@ lib.create = (dir,file,data,callback) => {
             });
 
         } else {
-            
+            // console.log(err);
             callback('could not create new file, it may already exist');
         }    
     });
@@ -57,7 +57,12 @@ lib.create = (dir,file,data,callback) => {
 
 lib.read = (dir,file,callback) => {
     fs.readFile(lib.baseDir+dir+'/'+file+'.json','utf8', (err,data) => {
-        callback(err,data);
+        if(!err && data) {
+            const parsedData = helpers.parseJSONtoObj(data);
+            callback(false,parsedData);
+        } else {
+            callback(err,data);
+        }
     });
 };
 
@@ -66,7 +71,7 @@ lib.update = (dir,file,data,callback) => {
         
         if(!err && fileDescriptor) {
             
-            let stringData = JSON.stringify(data);
+            const stringData = JSON.stringify(data);
             fs.truncate(fileDescriptor, (err) => {
 
                 if(!err) {

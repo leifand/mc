@@ -12,9 +12,10 @@ const helpers = require('./helpers');
 //
 const handlers = {};
 
+// users handler and _users crud ops
 handlers.users = (data, callback) => {
     
-    let acceptableMethods = ['post','get','put','delete'];
+    const acceptableMethods = ['post','get','put','delete'];
     if(acceptableMethods.indexOf(data.method) > -1) {
         
         handlers._users[data.method](data,callback);
@@ -34,12 +35,13 @@ handlers._users = {};
 handlers._users.post = (data, callback) => {
     // checks
     //
-    let fname = typeof(data.payload.fname) == 'string' && data.payload.fname.trim().length > 0 ? data.payload.fname.trim() : false;
-    let lname = typeof(data.payload.lname) == 'string' && data.payload.lname.trim().length > 0 ? data.payload.lname.trim() : false;
-    let phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
-    let password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
-    let tosAgreement = typeof(data.payload.tosAgreement) == 'boolean' && data.payload.tosAgreement == true ? true : false;
+    const fname = typeof(data.payload.fname) == 'string' && data.payload.fname.trim().length > 0 ? data.payload.fname.trim() : false;
+    const lname = typeof(data.payload.lname) == 'string' && data.payload.lname.trim().length > 0 ? data.payload.lname.trim() : false;
+    const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+    const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
+    const tosAgreement = typeof(data.payload.tosAgreement) == 'boolean' && data.payload.tosAgreement == true ? true : false;
 
+    // if data is vallid ...
     if(fname && lname && phone && password && tosAgreement) {
 
         // unique user?
@@ -47,11 +49,12 @@ handlers._users.post = (data, callback) => {
 
             if(err) {
 
-                let hashedPassword = helpers.hash(password);
+                // valid hash?
+                const hashedPassword = helpers.hash(password);
 
                 if(hashedPassword) {
 
-                    let userObject = {
+                    const userObject = {
                         'fname': fname,
                         'lname': lname,
                         'phone': phone,
@@ -59,8 +62,9 @@ handlers._users.post = (data, callback) => {
                         'tosAgreement': true
                     };
 
+                    // successful create / store to disk?
                     _data.create('users',phone,userObject,(err) => {
-
+                        console.log(userObject);
                         if(!err) {
 
                             callback(200);
@@ -91,8 +95,25 @@ handlers._users.post = (data, callback) => {
     }
 };
 
+// data: phone
+// todo: only allow auth user access .. 
+//
 handlers._users.get = (data, callback) => {
-    
+    // valid phone?
+    const phone = typeof(data.queryStringObj.phone) == 'string' && data.queryStringObj.phone.trim().length == 10 ? data.queryStringObj.phone.trim() : false;
+    if(phone) {
+        // lookup and return user
+        _data.read('users', phone, (err,data) => {
+            if(!err && data) {
+                delete data.hashedPassword;
+                callback(200, data);
+            } else {
+                callback(404);
+            }
+        });
+    } else {
+        callback(400,{'error':'missing required field'});
+    }
 };
 
 handlers._users.put = (data, callback) => {
@@ -104,8 +125,6 @@ handlers._users.delete = (data, callback) => {
 };
 
 handlers.sample = (data, callback) => {
-    // callback http status code
-    // payload (object)
     callback(406,{'name':'sample handler'});
 };
 
