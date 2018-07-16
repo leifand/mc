@@ -41,7 +41,7 @@ handlers._users.post = (data, callback) => {
     const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
     const tosAgreement = typeof(data.payload.tosAgreement) == 'boolean' && data.payload.tosAgreement == true ? true : false;
 
-    // if data is vallid ...
+    // if data is valid ...
     if(fname && lname && phone && password && tosAgreement) {
 
         // unique user?
@@ -116,12 +116,81 @@ handlers._users.get = (data, callback) => {
     }
 };
 
+// update
+// data: phone
+// other data optional
+// todo:  add user auth 
 handlers._users.put = (data, callback) => {
+    //required
+    const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
     
+    // optional
+    const fname = typeof(data.payload.fname) == 'string' && data.payload.fname.trim().length > 0 ? data.payload.fname.trim() : false;
+    const lname = typeof(data.payload.lname) == 'string' && data.payload.lname.trim().length > 0 ? data.payload.lname.trim() : false;
+    const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
+
+    if(phone) {
+        if(fname || lname || password) {
+            //make sure they exist
+            _data.read('users',phone, (err,userData) => {
+                if(!err && userData) {
+                    // update field(s)
+                    if(fname) {
+                        userData.fname = fname;
+                    } 
+                    if(lname) {
+                        userData.lname = lname;
+                    }
+                    if(password) {
+                        userData.hashedPassword = helpers.hash(password);
+                    }
+                    // store update
+                    _data.update('users',phone,userData,(err) => {
+                        if(!err) {
+                            callback(200);
+                        } else {
+                            console.log(err);
+                            callback(500,{'error':'could not update user'});
+                        }
+                    });
+
+                } else {
+                    callback(400,{'error':'user not found!!'});
+                }
+            });
+        } else {
+            callback(400,{'error':'missing fields to update'});
+        }
+    } else {
+        callback(400,{'error':'missing required field'});
+    }
 };
 
+// data: phone
+// todo: add user auth
+//       cleanup and delete associated user files
+//
 handlers._users.delete = (data, callback) => {
-    
+    // valid phone?
+    const phone = typeof(data.queryStringObj.phone) == 'string' && data.queryStringObj.phone.trim().length == 10 ? data.queryStringObj.phone.trim() : false;
+    if(phone) {
+        // lookup and return user
+        _data.read('users', phone, (err,data) => {
+            if(!err && data) {
+                _data.delete('users',phone,(err) => {
+                    if(!err) {
+                        callback(200);
+                    } else {
+                        callback(500,{'error':'could not delete the user!'});
+                    }
+                })
+            } else {
+                callback(400,{'error':'could not find user'});
+            }
+        });
+    } else {
+        callback(400,{'error':'missing required field'});
+    }
 };
 
 handlers.sample = (data, callback) => {
