@@ -193,6 +193,135 @@ handlers._users.delete = (data, callback) => {
     }
 };
 
+// tokens handler and _users crud ops
+handlers.tokens = (data, callback) => {
+    
+    const acceptableMethods = ['post','get','put','delete'];
+    if(acceptableMethods.indexOf(data.method) > -1) {
+        
+        handlers._tokens[data.method](data,callback);
+
+    } else {
+        
+        callback(405); // method not found
+    }
+};
+
+// container for token methods
+//
+handlers._tokens = {};
+
+// data: phone,password
+// 
+handlers._tokens.post = (data,callback) => {
+    const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+    const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
+    if(phone && password) {
+        _data.read('users',phone,(err,userData)=> {
+            if(!err && userData) {
+                // valid hash?
+                const hashedPassword = helpers.hash(password);
+                if(hashedPassword == userData.hashedPassword) {
+                    // create token
+                    const tokenID = helpers.createRandomString(20);
+                    const expires = Date.now() + 1000 * 60 * 60;
+                    const tokenObj = {
+                        'phone':phone,
+                        'id':tokenID,
+                        'expires':expires
+                    };
+                    _data.create('tokens',tokenID,tokenObj,(err) => {
+                        if(!err) {
+                            callback(200,tokenObj);
+                        } else {
+                            callback(500,{'error':'failed to create new token!'});
+                        }
+                    });
+                } else {
+                    callback(400,{'error':'password did not match'});
+                }
+            } else {
+                callback(400,{'error':'user not found'});
+            }
+        });
+    } else {
+        callback(400,{'error':'missing required field(s)'});
+    }
+};
+
+// data: ID
+handlers._tokens.get = (data,callback) => {
+    // valid id?
+    const id = typeof(data.queryStringObj.id) == 'string' && data.queryStringObj.id.trim().length == 20 ? data.queryStringObj.id.trim() : false;
+    if(id) {
+        // lookup and return token
+        _data.read('tokens', id, (err,tokenData) => {
+            if(!err && tokenData) {
+            
+                callback(200, tokenData);
+            } else {
+                callback(404);
+            }
+        });
+    } else {
+        callback(400,{'error':'_tokens.get missing required field'});
+    }
+};
+
+// data: id and extend
+handlers._tokens.put = (data,callback) => {
+    const id = typeof(data.payload.id) == 'string' && data.payload.id.trim().length == 20 ? data.payload.id.trim() : false;
+    const extend = typeof(data.payload.extend) == 'boolean' && data.payload.extend == true ? true : false;
+    if(id && extend) {
+        _data.read('tokens',id,(err,tokenData) => {
+            if(!err && tokenData) {
+                //expired?
+                if(tokenData.expires > Date.now()) {
+                    tokenData.expires = Date.now() + 1000 * 60 * 60;
+                    _data.update('tokens',id,tokenData,(err) => {
+                        if(!err) {
+                            callback(200);
+                        } else {
+                            callback(500,{'error':'failed to extend token'});
+                        }
+                    });
+                } else {
+                    callback(400,{'error':'token has expired'});
+                }
+            } else {
+                callback(400,{'error':'token does not exist'});
+            }
+        });
+    } else {
+        callback(400,{'error':'missing or invalid field(s)'});
+    }
+};
+
+// data: id
+handlers._tokens.delete = (data,callback) => {
+    // valid id?
+    const id = typeof(data.queryStringObj.id) == 'string' && data.queryStringObj.id.trim().length == 20 ? data.queryStringObj.id.trim() : false;
+    if(id) {
+        // lookup and return user
+        _data.read('tokens', id, (err,data) => {
+            if(!err && data) {
+                _data.delete('tokens',id,(err) => {
+                    if(!err) {
+                        console.log('deleting: ',id);
+                        callback(200);
+                    } else {
+                        callback(500,{'error':'could not delete the token!'});
+                    }
+                })
+            } else {
+                callback(400,{'error':'could not find token'});
+            }
+        });
+    } else {
+        callback(400,{'error':'missing required field'});
+    }
+};
+
 handlers.sample = (data, callback) => {
     callback(406,{'name':'sample handler'});
 };

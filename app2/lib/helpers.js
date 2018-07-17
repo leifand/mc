@@ -37,4 +37,19 @@ helpers.parseJSONtoObj = (str) => {
     }
 };
 
+helpers.createRandomString = (len) => {
+    len = typeof(len) == 'number' && len > 0 ? len : false;
+    if(len) {
+        const possibleChars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        let str = '';
+        for(let i=0;i<len;i++) {
+            let randChar = possibleChars.charAt(Math.floor(Math.random() * possibleChars.length));
+            str += randChar;
+        }
+        return str;
+    } else {
+        return false;
+    }
+};
+
 module.exports = helpers;
