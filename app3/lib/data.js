@@ -123,4 +123,18 @@ lib.delete = (dir,file,callback) => {
     });
 };
 
+lib.list = (dir,callback) => {
+    fs.readdir(lib.baseDir+'dir'+'/',(err,data) => {
+        if(!err && data && data.length > 0) {
+            const trimmedFilenames = [];
+            data.forEach((filename) => {
+                trimmedFilenames.push(filename.replace('.json',''));
+            });
+            callback(false,trimmedFilenames);
+        } else {
+            callback(err,data);
+        }
+    });
+};
+
 module.exports = lib;
