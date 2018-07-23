@@ -137,10 +137,6 @@ handlers._users.put = (data, callback) => {
     const fname = typeof(data.payload.fname) == 'string' && data.payload.fname.trim().length > 0 ? data.payload.fname.trim() : false;
     const lname = typeof(data.payload.lname) == 'string' && data.payload.lname.trim().length > 0 ? data.payload.lname.trim() : false;
     const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
-    tokens
-    tokens
-    tokens
-    tokens
     if(phone) {
         if(fname || lname || password) {
             const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
@@ -252,7 +248,7 @@ handlers._tokens.post = (data,callback) => {
                 if(hashedPassword == userData.hashedPassword) {
                     // create token
                     const tokenID = helpers.createRandomString(20);
-                    const expires = Date.now() + 1000 * 60 * 60;
+                    const expires = Date.now() + 1000 * 60 * 60 * 24; // I like a longer lasting token ><
                     const tokenObj = {
                         'phone':phone,
                         'id':tokenID,
@@ -455,6 +451,87 @@ handlers._checks.post = (data,callback) => {
         callback(400,{'error':'missing or invalid inputs'});
     }
 };
+
+// data: id
+//
+handlers._checks.get = (data,callback) => {
+    // valid phone?
+    const id = typeof(data.queryStringObj.id) == 'string' && data.queryStringObj.id.trim().length == 20 ? data.queryStringObj.id.trim() : false;
+    if(id) {
+        // lookup check
+        _data.read('checks',id,(err,checkData) => {
+            if(!err && checkData) {
+                const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+                handlers._tokens.verifyToken(token,checkData.userPhone,(tokenIsValid) => {
+                    if(tokenIsValid) {
+                       callback(200,checkData); 
+                    } else {
+                        callback(403);
+                    }
+                });
+            } else {
+                callback(404);
+            }
+        }); 
+    } else {
+        callback(400,{'error':'missing required field'});
+    }
+};
+
+// data: id
+// optional: protocol, url, method, successCodes, timeoutSeconds
+//
+handlers._checks.put = (data,callback) => {
+    //required
+    const id = typeof(data.payload.id) == 'string' && data.payload.id.trim().length == 20 ? data.payload.id.trim() : false;
+    
+    const protocol = typeof(data.payload.protocol) == 'string' && ['https','http'].indexOf(data.payload.protocol) > -1 ? data.payload.protocol : false;
+    const url = typeof(data.payload.url) == 'string' && data.payload.url.trim().length > 0 ? data.payload.url.trim() : false;
+    const method = typeof(data.payload.method) == 'string' && ['post','get','put','delete'].indexOf(data.payload.method) > -1 ? data.payload.method : false;
+    const successCodes = typeof(data.payload.successCodes) == 'object' && data.payload.successCodes instanceof Array && data.payload.successCodes.length > 0 ? data.payload.successCodes : false;
+    const timeoutSeconds = typeof(data.payload.timeoutSeconds) == 'number' && data.payload.timeoutSeconds % 1 === 0 && data.payload.timeoutSeconds >= 1 && data.payload.timeoutSeconds <= 5 ? data.payload.timeoutSeconds : false;
+
+    if(id) {
+        if(protocol || url || method || successCodes || timeoutSeconds) {
+            // lookup check
+            _data.read('checks',id,(err,checkData) => {
+                if(!err && checkData) {
+                    const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+                    handlers._tokens.verifyToken(token,checkData.userPhone,(tokenIsValid) => {
+                        if(tokenIsValid) {
+                            // update check where needed
+                            if(protocol) {checkData.protocol = protocol;}
+                            if(url) {checkData.url = url;}
+                            if(method) {checkData.method = method;}
+                            if(successCodes) {checkData.successCodes = successCodes;}
+                            if(timeoutSeconds) {checkData.timeoutSeconds = timeoutSeconds;}
+                            _data.update('checks',id,checkData,(err) => {
+                                if(!err) {
+                                    callback(200,checkData);
+                                } else {
+                                    callback(500,{'error':'failed to update check'});
+                                }
+                            });
+                        } else {
+                            callback(403,{'error':'failed to auth token'});
+                        }
+                    });
+                } else {
+                    callback(400,{'error':'check id did not exist'});
+                }
+            });
+        } else {
+            callback(400,{'error':'missing fields to update'});
+        }
+    } else {
+        callback(400,{'error':'missing required field'});
+    }
+};
+
+handlers._checks.delete = (data,callback) => {
+
+};
+// CHECKS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
 handlers.sample = (data, callback) => {
