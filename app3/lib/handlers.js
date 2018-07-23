@@ -182,7 +182,6 @@ handlers._users.put = (data, callback) => {
 };
 
 // data: phone
-//       cleanup and delete associated user files
 //
 handlers._users.delete = (data, callback) => {
     // valid phone?
@@ -192,11 +191,32 @@ handlers._users.delete = (data, callback) => {
         handlers._tokens.verifyToken(token,phone,(tokenIsValid) => {
             if(tokenIsValid) {
                 // lookup and return user
-                _data.read('users', phone, (err,data) => {
-                    if(!err && data) {
+                _data.read('users', phone, (err,userData) => {
+                    if(!err && userData) {
                         _data.delete('users',phone,(err) => {
                             if(!err) {
-                                callback(200);
+                                // delete associated checks
+                                const userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];    
+                                const checksToDelete = userChecks.length;
+                                if(checksToDelete > 0) {
+                                    let checksDeleted = 0;
+                                    let deletionErrors = false;
+                                    // loop through checks
+                                    userChecks.forEach((checkID) => {
+                                        _data.delete('checks',checkID,(err) => {
+                                            if(err) { deletionErrors = true; }
+                                            checksDeleted++;
+                                            if(checksDeleted == checksToDelete) 
+                                                if(!deletionErrors) {
+                                                    callback(200);
+                                                } else {
+                                                    callback(500,{'error':'failure to delete former users checks'});
+                                                }
+                                        })
+                                    });
+                                } else {
+                                    callback(200);
+                                }
                             } else {
                                 callback(500,{'error':'could not delete the user!'});
                             }
@@ -528,8 +548,60 @@ handlers._checks.put = (data,callback) => {
     }
 };
 
-handlers._checks.delete = (data,callback) => {
 
+// data: id
+//
+handlers._checks.delete = (data,callback) => {
+    // valid check id?
+    const id = typeof(data.queryStringObj.id) == 'string' && data.queryStringObj.id.trim().length == 20 ? data.queryStringObj.id.trim() : false;
+    if(id) {
+        // lookup check to delete
+        _data.read('checks',id,(err,checkData) => {
+            if(!err && checkData) {
+                const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+                handlers._tokens.verifyToken(token,checkData.userPhone,(tokenIsValid) => {
+                    if(tokenIsValid) {
+                        // delete the check data
+                        _data.delete('checks',id,(err) => {
+                            if(!err) {
+                                // lookup and modify user
+                                _data.read('users', checkData.userPhone, (err,userData) => {
+                                    if(!err && userData) {
+                                       const userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];    
+                                       // remove delete check from list of checks
+                                       const checkPos = userChecks.indexOf(id);
+                                       if(checkPos > -1) {
+                                            userChecks.splice(checkPos,1);
+                                            // re-save user
+                                            _data.update('users',checkData.userPhone,userData,(err) => {
+                                                if(!err) {
+                                                    callback(200);
+                                                } else {
+                                                    callback(500,{'error':'could not update user!'});
+                                                }
+                                            });
+                                       } else {
+                                           callback(500,{'error':'could not find check on user object'});
+                                       }
+                                    } else {
+                                        callback(500,{'error':'could not find user that created check'});
+                                    }
+                                });
+                            } else {
+                                callback(500,{'error':'could not delete check, please contact your friendly system administrator have a nice day'});
+                            }
+                        });
+                    } else {
+                        callback(403,{'error':'invalid or missing token'});
+                    }
+                });
+            } else {
+                callback(400,{'error':'check id does not exist'});
+            }
+        });
+    } else {
+        callback(400,{'error':'missing required field'});
+    }   
 };
 // CHECKS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
