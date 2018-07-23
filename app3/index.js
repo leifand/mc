@@ -13,6 +13,10 @@ const fs = require('fs');
 const handlers = require('./lib/handlers');
 const helpers = require('./lib/helpers');
 
+/*helpers.sendTwilioSMS('4694221552','SYSTEM FAILURE ALERT',(err) => {
+    console.log('confucious says: your twilio fears are ...',err);
+});*/
+
 // instantiate servers
 const httpServer = http.createServer((req,res) => {
     unifiedServer(req,res);
