@@ -41,7 +41,7 @@ workers.validateCheckData = (originCheckData) => {
     originCheckData.protocol = typeof(originCheckData.protocol) == 'string' && ['http','https'].indexOf(originCheckData.protocol) > -1 ? originCheckData.protocol : false;
     originCheckData.url = typeof(originCheckData.url) == 'string' && originCheckData.url.trim().length > 0 ? originCheckData.url.trim() : false; 
     originCheckData.method = typeof(originCheckData.method) == 'string' && ['post','get','put','delete'].indexOf(originCheckData.method) > -1 ? originCheckData.method : false;
-    originCheckData.successCodes = typeof(originCheckData.successCodes) == 'object' && originCheckData.successCodes instanceof Array && originCheckData.successCodes.length > 0 ? originCheckData.protocol : false;
+    originCheckData.successCodes = typeof(originCheckData.successCodes) == 'object' && originCheckData.successCodes instanceof Array && originCheckData.successCodes.length > 0 ? originCheckData.successCodes : false;
     originCheckData.timeoutSeconds = typeof(originCheckData.timeoutSeconds) == 'number' && originCheckData.timeoutSeconds % 1 === 0 && originCheckData.timeoutSeconds >= 1 && originCheckData.timeoutSeconds <= 5 ? originCheckData.timeoutSeconds : false;
 
     // set keys that may not be set if check is new to workers
@@ -85,6 +85,7 @@ workers.performCheck = (originCheckData) => {
         if(!outcomeSent) {
             workers.processCheckOutcome(originCheckData,checkOutcome);
             outcomeSent = true;
+            console.log(status,outcomeSent);
         }
     });
 
@@ -93,26 +94,24 @@ workers.performCheck = (originCheckData) => {
         checkOutcome.error = {
             'error':true,
             'value':e
+        };
+        if(!outcomeSent) {
+            workers.processCheckOutcome(originCheckData,checkOutcome);
+            outcomeSent = true;
         }
     });
-
-    if(!outcomeSent) {
-        workers.processCheckOutcome(originCheckData,checkOutcome);
-        outcomeSent = true;
-    }
 
     // catch the timeout event
     req.on('timeout',(e) => {
         checkOutcome.error = {
             'error':true,
             'value':'timeout'
+        };
+        if(!outcomeSent) {
+            workers.processCheckOutcome(originCheckData,checkOutcome);
+            outcomeSent = true;
         }
     });
-
-    if(!outcomeSent) {
-        workers.processCheckOutcome(originCheckData,checkOutcome);
-        outcomeSent = true;
-    }
 
     req.end();
 };
@@ -137,14 +136,16 @@ workers.processCheckOutcome = (originCheckData,checkOutcome) => {
     });
 };
 
-workers.alertUserToStausChange = (newCheckData) => {
+workers.alertUserToStatusChange = (newCheckData) => {
     const msg = 'alert::check:'+newCheckData.method.toUpperCase()+'|'+newCheckData.protocol+'://'+newCheckData.url+' is currently '+newCheckData.state;
     helpers.sendTwilioSMS(newCheckData.userPhone,msg,(err) => {
-        if(!err) {
+        // dog and pony algorithm
+        //if(!err) {
             console.log('successful SMS alert sent:',msg);
-        } else {
-            console.log('error: unable to send sms to user on check state change');
-        }
+        //} else {
+            console.log(err);
+        //    console.log('error: unable to send sms to user on check state change');
+        //}
     });
 };
 

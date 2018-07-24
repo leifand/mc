@@ -70,7 +70,7 @@ server.unifiedServer = (req,res) => {
             statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
             //default payload 
             payload  = typeof(payload) == 'object' ? payload : {};
-            const payloadString = JSON.stringify(payloadconst );
+            const payloadString = JSON.stringify(payload);
             //send response
             res.setHeader('Content-Type','application/json');
             res.writeHead(statusCode);
