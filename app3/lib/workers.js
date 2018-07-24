@@ -14,11 +14,12 @@ const url = require('url');
 
 const workers = {};
 
-worker.gatherAllChecks = () => {
+workers.gatherAllChecks = () => {
     _data.list('checks',(err,checks) => {
         if(!err && checks && checks.length > 0) {
             checks.forEach((check) => {
                 _data.read('checks',check,(err,originCheckData) => {
+                    console.log(originCheckData);
                     if(!err && originCheckData) {
                         workers.validateCheckData(originCheckData);
                     } else {
@@ -33,6 +34,7 @@ worker.gatherAllChecks = () => {
 };
 
 workers.validateCheckData = (originCheckData) => {
+    // run checks
     originCheckData = typeof(originCheckData) == 'object' && originCheckData != null ? originCheckData : {};
     originCheckData.id = typeof(originCheckData.id) == 'string' && originCheckData.id.trim().length == 20 ? originCheckData.id.trim() : false; 
     originCheckData.userPhone = typeof(originCheckData.userPhone) == 'string' && originCheckData.userPhone.trim().length == 10 ? originCheckData.userPhone.trim() : false;
@@ -56,25 +58,27 @@ workers.validateCheckData = (originCheckData) => {
         }
 };
 
-workers.performCheck = (originCheckData) {
+workers.performCheck = (originCheckData) => {
+    
     const checkOutcome = {
         'error':false,
         'responseCode':false
-    };
+    }; // checkOutcome
 
     let outcomeSent = false;
     const parsedURL = url.parse(originCheckData.protocol+'://'+originCheckData.url,true);
     const hostname = parsedURL.hostname;
-    const path = parsedURL.path;
+    const path = parsedURL.path; // path includes querystring data
+    
     const requestDetails = {
         'protocol':originCheckData.protocol+':',
         'hostname':hostname,
         'method':originCheckData.method.toUpperCase(),
         'path':path,
         'timeout':originCheckData.timeoutSeconds * 1000
-    };
+    }; // requestDetails
 
-    const _moduleToUse = originCheckData.protocol == 'http' ? 'http' : 'https';
+    const _moduleToUse = originCheckData.protocol == 'http' ? http : https;
     const req = _moduleToUse.request(requestDetails,(res) => {
         const status = res.statusCode;
         checkOutcome.responseCode = status;
@@ -84,25 +88,27 @@ workers.performCheck = (originCheckData) {
         }
     });
 
-    // catch error event
+    // catch thrown error event
     req.on('error',(e) => {
         checkOutcome.error = {
             'error':true,
             'value':e
         }
     });
+
     if(!outcomeSent) {
         workers.processCheckOutcome(originCheckData,checkOutcome);
         outcomeSent = true;
     }
 
-        // catch error event
+    // catch the timeout event
     req.on('timeout',(e) => {
         checkOutcome.error = {
             'error':true,
             'value':'timeout'
         }
     });
+
     if(!outcomeSent) {
         workers.processCheckOutcome(originCheckData,checkOutcome);
         outcomeSent = true;
@@ -111,7 +117,7 @@ workers.performCheck = (originCheckData) {
     req.end();
 };
 
-workers.processCheckOutcome = (originCheckData,checkOutcome) {
+workers.processCheckOutcome = (originCheckData,checkOutcome) => {
     const state = !checkOutcome.error && checkOutcome.responseCode && originCheckData.successCodes.indexOf(checkOutcome.responseCode) > -1 ? 'up' : 'down';
     // alert ??? lastChecked still truthy AND has state changed
     const alertWarrented = originCheckData.lastChecked && originCheckData.state !== state ? true : false;
@@ -132,7 +138,14 @@ workers.processCheckOutcome = (originCheckData,checkOutcome) {
 };
 
 workers.alertUserToStausChange = (newCheckData) => {
-    const msg = '';
+    const msg = 'alert::check:'+newCheckData.method.toUpperCase()+'|'+newCheckData.protocol+'://'+newCheckData.url+' is currently '+newCheckData.state;
+    helpers.sendTwilioSMS(newCheckData.userPhone,msg,(err) => {
+        if(!err) {
+            console.log('successful SMS alert sent:',msg);
+        } else {
+            console.log('error: unable to send sms to user on check state change');
+        }
+    });
 };
 
 workers.loop = () => {
@@ -142,7 +155,7 @@ workers.loop = () => {
 }
 
 workers.init = () => {
-    worker.gatherAllChecks();
+    workers.gatherAllChecks();
     workers.loop();
 };
 

@@ -14,9 +14,9 @@ const handlers = require('./handlers');
 const helpers = require('./helpers');
 const path = require('path');
 
-/*helpers.sendTwilioSMS('4694221552','SYSTEM FAILURE ALERT',(err) => {
+helpers.sendTwilioSMS('4694221552','SYSTEM FAILURE ALERT',(err) => {
     console.log('confucious says: your twilio fears are ...',err);
-});*/
+});
 
 const server = {};
 

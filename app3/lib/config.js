@@ -3,8 +3,6 @@
 * url checker 
 * create and export configuration vars
 */
-
-// container for envs
 const environments = {};
 
 environments.staging = {
