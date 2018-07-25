@@ -13,9 +13,11 @@ const fs = require('fs');
 const handlers = require('./handlers');
 const helpers = require('./helpers');
 const path = require('path');
+const util = require('util');
+const debug = util.debuglog('server');
 
 helpers.sendTwilioSMS('4694221552','SYSTEM FAILURE ALERT',(err) => {
-    console.log('confucious says: your twilio fears are ...',err);
+    console.log('\x1b[37m%s\x1b[0m','confucious says: your twilio fears are ...',err);
 });
 
 const server = {};
@@ -76,7 +78,11 @@ server.unifiedServer = (req,res) => {
             res.writeHead(statusCode);
             res.end(payloadString);
             // log
-            console.log('response: ',statusCode, payloadString);
+            if(statusCode == 200 || statusCode == 201 || statusCode == 300 || statusCode == 301) {
+                debug('\x1b[32m%s\x1b[0m',method.toUpperCase()+' /'+trimmedPath+' '+statusCode);
+            } else {
+                debug('\x1b[31m%s\x1b[0m',method.toUpperCase()+' /'+trimmedPath+' '+statusCode);
+            }
         });
     });
 };
@@ -85,11 +91,11 @@ server.unifiedServer = (req,res) => {
 server.init = () => {
 // start servers
     server.httpServer.listen(config.httpPort, () => {
-        console.log('SERVER RUNNING ON PORT:'+config.httpPort+' in '+config.envName+' mode');
+        console.log('\x1b[36m%s\x1b[0m','SERVER RUNNING ON PORT:'+config.httpPort+' in '+config.envName+' mode');
     });
 
     server.httpsServer.listen(config.httpsPort, () => {
-        console.log('SERVER RUNNING ON PORT:'+config.httpsPort+' in '+config.envName+' mode');
+        console.log('\x1b[35m%s\x1b[0m','SERVER RUNNING ON PORT:'+config.httpsPort+' in '+config.envName+' mode');
     });
 };
 
