@@ -1,5 +1,7 @@
 /*
-*   Request Handlers
+*   Pizza Lord server request handlers
+*   all http/s crud handling for routes defined in server.js
+*   we could break this up into seperate <activity>handler.js files ... 
 */
 
 
@@ -46,17 +48,12 @@ handlers._users.post = (data, callback) => {
 
     // if data is valid ...
     if(fname && lname && phone && password && tosAgreement) {
-
         // unique user?
         _data.read('users',phone,(err,data) => {
-
             if(err) {
-
                 // valid hash?
                 const hashedPassword = helpers.hash(password);
-
                 if(hashedPassword) {
-
                     const userObject = {
                         'fname': fname,
                         'lname': lname,
@@ -64,36 +61,24 @@ handlers._users.post = (data, callback) => {
                         'hashedPassword': hashedPassword,
                         'tosAgreement': true
                     };
-
                     // successful create / store to disk?
                     _data.create('users',phone,userObject,(err) => {
                         console.log(userObject);
                         if(!err) {
-
                             callback(200);
-
                         } else {
-
                             console.log(err);
                             callback(500,{'error':'failed to create new user!'});
                         }
                     });
-
                 } else {
-
                     callback(500,{'error':'failed hash!'});
-
                 }
-
             } else {
-
                 callback(400,{'error':'that phone number already exists'});
             };
-
         });
-
     } else {
-
         callback(400,{'error':'missing required fields'});
     }
 };
@@ -239,14 +224,10 @@ handlers._users.delete = (data, callback) => {
 // TOKENS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // tokens handler and crud ops
 handlers.tokens = (data, callback) => {
-    
     const acceptableMethods = ['post','get','put','delete'];
     if(acceptableMethods.indexOf(data.method) > -1) {
-        
         handlers._tokens[data.method](data,callback);
-
     } else {
-        
         callback(405); // method not found
     }
 };

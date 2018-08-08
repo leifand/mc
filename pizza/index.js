@@ -1,5 +1,5 @@
 /* 
-*   Pizza Lord server: pizza builder API
+*   Pizza Lord server: pizza order builder API
 *   Leif Anderson for Node JS Master Class 
 */
 

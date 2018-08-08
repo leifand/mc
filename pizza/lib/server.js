@@ -1,6 +1,6 @@
 /*
-* server related tasks
-*
+*   Pizza Lord main server file
+*   server instantiation and routing
 *
 */
 
@@ -77,7 +77,7 @@ server.unifiedServer = (req,res) => {
             res.setHeader('Content-Type','application/json');
             res.writeHead(statusCode);
             res.end(payloadString);
-            // log
+            // log to console
             if(statusCode == 200 || statusCode == 201 || statusCode == 300 || statusCode == 301) {
                 debug('\x1b[32m%s\x1b[0m',method.toUpperCase()+' /'+trimmedPath+' '+statusCode);
             } else {
