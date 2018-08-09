@@ -102,11 +102,13 @@ server.init = () => {
 // our req router
 //
 server.router = {
-    'sample':handlers.sample,
+    'about':handlers.about,
     'ping':handlers.ping,
     'users':handlers.users,
     'tokens':handlers.tokens,
-    'checks':handlers.checks
+    'checks':handlers.checks,
+    'order':handlers.order,
+    'pfactor':handlers.pfactor
 };
 
 module.exports = server;

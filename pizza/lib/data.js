@@ -1,7 +1,8 @@
 /* 
 * Data Library
-* simple storage and editing for the Pizza Lord server
-* Leif Anderson
+* simple storage and editing
+* Pizza Lord 2018
+* by Leif Anderson
 * from Node JS Masterclass @ pirple.com
 */
 

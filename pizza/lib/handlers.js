@@ -1,9 +1,12 @@
-/*
+/* 
+*   handlers.js
+*   Pizza Lord 2018
+*   by Leif Anderson
+*   from Node JS Masterclass @ pirple.com
 *   Pizza Lord server request handlers
 *   all http/s crud handling for routes defined in server.js
 *   we could break this up into seperate <activity>handler.js files ... 
 */
-
 
 
 // USERS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -68,11 +71,11 @@ handlers._users.post = (data, callback) => {
                             callback(200);
                         } else {
                             console.log(err);
-                            callback(500,{'error':'failed to create new user!'});
+                            callback(500,{'error':'failed to create new user'});
                         }
                     });
                 } else {
-                    callback(500,{'error':'failed hash!'});
+                    callback(500,{'error':'failed hash'});
                 }
             } else {
                 callback(400,{'error':'that phone number already exists'});
@@ -586,9 +589,18 @@ handlers._checks.delete = (data,callback) => {
 };
 // CHECKS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+handlers.order = (data, callback) => {
+    callback(200);
+};
 
-handlers.sample = (data, callback) => {
-    callback(406,{'name':'sample handler'});
+handlers.pfactor = (data, callback) => {
+    callback(200,{'pfactor':helpers.createRandomString(8)});
+};
+
+handlers.about = (data, callback) => {
+    callback(200,{'name':'Pizza Lord Server 2018',
+                  'version':'0.1',
+                  'description':'early access!!'});
 };
 
 handlers.ping = (data, callback) => {

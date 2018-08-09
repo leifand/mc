@@ -1,5 +1,6 @@
 /*
-*   Pizza Lord server lib for storing and rotating logs
+*   lib for storing and rotating logs
+*   Pizza Lord 2018
 */
 
 const fs = require('fs');
