@@ -1,6 +1,6 @@
 /*
-
-    worker related tasks
+*   Leif Anderson 2018 - node js master class
+    asynchronous worker related tasks via setInterval
 */
 
 // dependencies
@@ -40,7 +40,7 @@ workers.validateCheckData = (originCheckData) => {
     // run checks
     originCheckData = typeof(originCheckData) == 'object' && originCheckData != null ? originCheckData : {};
     originCheckData.id = typeof(originCheckData.id) == 'string' && originCheckData.id.trim().length == 20 ? originCheckData.id.trim() : false; 
-    originCheckData.userPhone = typeof(originCheckData.userPhone) == 'string' && originCheckData.userPhone.trim().length == 10 ? originCheckData.userPhone.trim() : false;
+    originCheckData.userName = typeof(originCheckData.userName) == 'string' && originCheckData.userName.trim().length > 0 ? originCheckData.userName.trim() : false;
     originCheckData.protocol = typeof(originCheckData.protocol) == 'string' && ['http','https'].indexOf(originCheckData.protocol) > -1 ? originCheckData.protocol : false;
     originCheckData.url = typeof(originCheckData.url) == 'string' && originCheckData.url.trim().length > 0 ? originCheckData.url.trim() : false; 
     originCheckData.method = typeof(originCheckData.method) == 'string' && ['post','get','put','delete'].indexOf(originCheckData.method) > -1 ? originCheckData.method : false;
@@ -52,7 +52,7 @@ workers.validateCheckData = (originCheckData) => {
     originCheckData.lastChecked = typeof(originCheckData.lastChecked) == 'number' && originCheckData.lastChecked > 0 ? originCheckData.lastChecked : false;
 
     // check for pass
-    if(originCheckData.id && originCheckData.userPhone && originCheckData.protocol &&
+    if(originCheckData.id && originCheckData.userName && originCheckData.protocol &&
         originCheckData.url && originCheckData.method && originCheckData.successCodes &&
         originCheckData.timeoutSeconds) {
             workers.performCheck(originCheckData);
@@ -195,13 +195,13 @@ workers.rotateLogs = () => {
                     if(!err) {
                         _logs.truncate(logID,(err) => {
                             if(!err) {
-                                debug('successfully truncated log file');
+                                debug('\x1b[32m%s\x1b[0m','successfully truncated log file');
                             } else {
-                                debug('error truncating log file');
+                                debug('\x1b[31m%s\x1b[0m','error truncating log file');
                             }
                         });
                     } else {
-                        debug('error compressing log file: ',err);
+                        debug('\x1b[31m%s\x1b[0m','error compressing log file: ',err);
                     }
                 });
             });
