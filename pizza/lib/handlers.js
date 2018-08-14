@@ -591,9 +591,37 @@ handlers._checks.delete = (data,callback) => {
 };
 // CHECKS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-handlers.order = (data, callback) => {
-    callback(200);
+// ORDERS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// checks handler and crud ops
+handlers.orders = (data, callback) => {
+    
+    const acceptableMethods = ['post','get','put','delete'];
+    if(acceptableMethods.indexOf(data.method) > -1) {
+        
+        handlers._orders[data.method](data,callback);
+
+    } else {
+        
+        callback(405); // method not found
+    }
 };
+
+// container for checks methods
+//
+handlers._orders = {};
+
+// orders post
+// data: protocol, url, method, success codes, timeout
+//
+handlers._orders.post = (data,callback) => {};
+
+handlers._orders.get = (data, callback) => {};
+
+handlers._orders.put = (data, callback) => {};
+
+handlers._orders.delete = (data, callback) => {};
+
+// ORDERS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 handlers.pfactor = (data, callback) => {
     callback(200,{'pfactor':helpers.createRandomString(8)});
@@ -603,7 +631,8 @@ handlers.about = (data, callback) => {
     callback(200,{'name':'Pizza Lord Server 2018',
                   'version':'beta 0.1',
                   'description':'early access!!',
-                  'contact':'leif.v.anderson@gmail.com'});
+                  'contact':'leif.v.anderson@gmail.com',
+                  'localtime':Date()});
 };
 
 handlers.ping = (data, callback) => {

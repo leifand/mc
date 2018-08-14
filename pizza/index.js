@@ -1,6 +1,6 @@
 /* 
 *   Pizza Lord server: pizza order builder API
-*   Leif Anderson for Node JS Master Class 
+*   Leif Anderson 2018 for Node JS Master Class 
 */
 
 const server = require('./lib/server');

@@ -107,7 +107,7 @@ server.router = {
     'users':handlers.users,
     'tokens':handlers.tokens,
     'checks':handlers.checks,
-    'order':handlers.order,
+    'order':handlers.orders,
     'pfactor':handlers.pfactor
 };
 
