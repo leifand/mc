@@ -38,21 +38,22 @@ handlers.users = (data, callback) => {
 //
 handlers._users = {};
 
-// data: fname, lname, phone, password, tosAgreement
+// data: fname, lname, uname, password, tosAgreement
 //
 handlers._users.post = (data, callback) => {
     // checks
     //
     const fname = typeof(data.payload.fname) == 'string' && data.payload.fname.trim().length > 0 ? data.payload.fname.trim() : false;
     const lname = typeof(data.payload.lname) == 'string' && data.payload.lname.trim().length > 0 ? data.payload.lname.trim() : false;
-    const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+    const uname = typeof(data.payload.uname) == 'string' && data.payload.uname.trim().length > 0 ? data.payload.uname.trim() : false;
+    const email = typeof(data.payload.email) == 'string' && data.payload.email.trim().length > 0 ? data.payload.email.trim() : false;
     const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
     const tosAgreement = typeof(data.payload.tosAgreement) == 'boolean' && data.payload.tosAgreement == true ? true : false;
 
     // if data is valid ...
-    if(fname && lname && phone && password && tosAgreement) {
+    if(fname && lname && uname && email && password && tosAgreement) {
         // unique user?
-        _data.read('users',phone,(err,data) => {
+        _data.read('users',uname,(err,data) => {
             if(err) {
                 // valid hash?
                 const hashedPassword = helpers.hash(password);
@@ -60,12 +61,13 @@ handlers._users.post = (data, callback) => {
                     const userObject = {
                         'fname': fname,
                         'lname': lname,
-                        'phone': phone,
+                        'uname': uname,
+                        'email': email,
                         'hashedPassword': hashedPassword,
                         'tosAgreement': true
                     };
                     // successful create / store to disk?
-                    _data.create('users',phone,userObject,(err) => {
+                    _data.create('users',uname,userObject,(err) => {
                         console.log(userObject);
                         if(!err) {
                             callback(200);
@@ -78,7 +80,7 @@ handlers._users.post = (data, callback) => {
                     callback(500,{'error':'failed hash'});
                 }
             } else {
-                callback(400,{'error':'that phone number already exists'});
+                callback(400,{'error':'that user name number already exists'});
             };
         });
     } else {
@@ -86,17 +88,17 @@ handlers._users.post = (data, callback) => {
     }
 };
 
-// data: phone
+// data: uname
 //
 handlers._users.get = (data, callback) => {
-    // valid phone?
-    const phone = typeof(data.queryStringObj.phone) == 'string' && data.queryStringObj.phone.trim().length == 10 ? data.queryStringObj.phone.trim() : false;
-    if(phone) {
+    // valid uname?
+    const uname = typeof(data.queryStringObj.uname) == 'string' && data.queryStringObj.uname.trim().length > 0 ? data.queryStringObj.uname.trim() : false;
+    if(uname) {
         const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-        handlers._tokens.verifyToken(token,phone,(tokenIsValid) => {
+        handlers._tokens.verifyToken(token,uname,(tokenIsValid) => {
             if(tokenIsValid) {
                 // lookup and return user
-                _data.read('users', phone, (err,data) => {
+                _data.read('users', uname, (err,data) => {
                     if(!err && data) {
                     delete data.hashedPassword;
                     callback(200, data);
@@ -115,23 +117,23 @@ handlers._users.get = (data, callback) => {
 };
 
 // update
-// data: phone
+// data: uname
 // other data optional
 handlers._users.put = (data, callback) => {
     //required
-    const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+    const uname = typeof(data.payload.uname) == 'string' && data.payload.uname.trim().length == 10 ? data.payload.uname.trim() : false;
     
     // optional
     const fname = typeof(data.payload.fname) == 'string' && data.payload.fname.trim().length > 0 ? data.payload.fname.trim() : false;
     const lname = typeof(data.payload.lname) == 'string' && data.payload.lname.trim().length > 0 ? data.payload.lname.trim() : false;
     const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
-    if(phone) {
+    if(uname) {
         if(fname || lname || password) {
             const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-            handlers._tokens.verifyToken(token,phone,(tokenIsValid) => {
+            handlers._tokens.verifyToken(token,uname,(tokenIsValid) => {
                 if(tokenIsValid) {
                     //make sure they exist
-                    _data.read('users',phone, (err,userData) => {
+                    _data.read('users',uname, (err,userData) => {
                         if(!err && userData) {
                             // update field(s)
                             if(fname) {
@@ -144,7 +146,7 @@ handlers._users.put = (data, callback) => {
                                 userData.hashedPassword = helpers.hash(password);
                             }
                             // store update
-                            _data.update('users',phone,userData,(err) => {
+                            _data.update('users',uname,userData,(err) => {
                                 if(!err) {
                                     callback(200);
                                 } else {
@@ -169,19 +171,19 @@ handlers._users.put = (data, callback) => {
     }
 };
 
-// data: phone
+// data: uname
 //
 handlers._users.delete = (data, callback) => {
-    // valid phone?
-    const phone = typeof(data.queryStringObj.phone) == 'string' && data.queryStringObj.phone.trim().length == 10 ? data.queryStringObj.phone.trim() : false;
-    if(phone) {
+    // valid uname?
+    const uname = typeof(data.queryStringObj.uname) == 'string' && data.queryStringObj.uname.trim().length == 10 ? data.queryStringObj.uname.trim() : false;
+    if(uname) {
         const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-        handlers._tokens.verifyToken(token,phone,(tokenIsValid) => {
+        handlers._tokens.verifyToken(token,uname,(tokenIsValid) => {
             if(tokenIsValid) {
                 // lookup and return user
-                _data.read('users', phone, (err,userData) => {
+                _data.read('users', uname, (err,userData) => {
                     if(!err && userData) {
-                        _data.delete('users',phone,(err) => {
+                        _data.delete('users',uname,(err) => {
                             if(!err) {
                                 // delete associated checks
                                 const userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];    
@@ -239,13 +241,13 @@ handlers.tokens = (data, callback) => {
 //
 handlers._tokens = {};
 
-// data: phone,password
+// data: uname,password
 // 
 handlers._tokens.post = (data,callback) => {
-    const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
+    const uname = typeof(data.payload.uname) == 'string' && data.payload.uname.trim().length > 0 ? data.payload.uname.trim() : false;
     const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
-    if(phone && password) {
-        _data.read('users',phone,(err,userData)=> {
+    if(uname && password) {
+        _data.read('users',uname,(err,userData)=> {
             if(!err && userData) {
                 // valid hash?
                 const hashedPassword = helpers.hash(password);
@@ -254,7 +256,7 @@ handlers._tokens.post = (data,callback) => {
                     const tokenID = helpers.createRandomString(20);
                     const expires = Date.now() + 1000 * 60 * 60 * 24; // I like a longer lasting token ><
                     const tokenObj = {
-                        'phone':phone,
+                        'uname':uname,
                         'id':tokenID,
                         'expires':expires
                     };
@@ -305,7 +307,7 @@ handlers._tokens.put = (data,callback) => {
             if(!err && tokenData) {
                 //expired?
                 if(tokenData.expires > Date.now()) {
-                    tokenData.expires = Date.now() + 1000 * 60 * 60;
+                    tokenData.expires = Date.now() + 1000 * 60 * 60 * 24;
                     _data.update('tokens',id,tokenData,(err) => {
                         if(!err) {
                             callback(200);
@@ -350,10 +352,10 @@ handlers._tokens.delete = (data,callback) => {
     }
 };
 
-handlers._tokens.verifyToken = (id,phone,callback) => {
+handlers._tokens.verifyToken = (id,uname,callback) => {
     _data.read('tokens',id,(err,tokenData) => {
         if(!err && tokenData) {
-            if(tokenData.phone == phone && tokenData.expires > Date.now()) {
+            if(tokenData.uname == uname && tokenData.expires > Date.now()) {
                 callback(true);
             } else {
                 callback(false);
@@ -400,9 +402,9 @@ handlers._checks.post = (data,callback) => {
             console.log(token);
             console.log(tokenData);
             if(!err && tokenData) {
-                const userPhone = tokenData.phone;
-                _data.read('users',userPhone,(err,userData) => {
-                    console.log(userPhone);
+                const userName = tokenData.uname;
+                _data.read('users',userName,(err,userData) => {
+                    console.log(userName);
                     console.log(err);
                     console.log(userData);
                     if(!err && userData) {
@@ -415,7 +417,7 @@ handlers._checks.post = (data,callback) => {
                             // create check
                             const checkObj = {
                                 'id':checkID,
-                                'userPhone':userPhone,
+                                'userName':userName,
                                 'protocol':protocol,
                                 'url':url,
                                 'method':method,
@@ -428,7 +430,7 @@ handlers._checks.post = (data,callback) => {
                                     // add new check id to user
                                     userData.checks = userChecks;
                                     userData.checks.push(checkID);
-                                    _data.update('users',userPhone,userData,(err) => {
+                                    _data.update('users',userName,userData,(err) => {
                                         if(!err) {
                                             callback(200,checkObj);
                                         } else {
@@ -459,14 +461,14 @@ handlers._checks.post = (data,callback) => {
 // data: id
 //
 handlers._checks.get = (data,callback) => {
-    // valid phone?
+    // valid uname?
     const id = typeof(data.queryStringObj.id) == 'string' && data.queryStringObj.id.trim().length == 20 ? data.queryStringObj.id.trim() : false;
     if(id) {
         // lookup check
         _data.read('checks',id,(err,checkData) => {
             if(!err && checkData) {
                 const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-                handlers._tokens.verifyToken(token,checkData.userPhone,(tokenIsValid) => {
+                handlers._tokens.verifyToken(token,checkData.userName,(tokenIsValid) => {
                     if(tokenIsValid) {
                        callback(200,checkData); 
                     } else {
@@ -501,7 +503,7 @@ handlers._checks.put = (data,callback) => {
             _data.read('checks',id,(err,checkData) => {
                 if(!err && checkData) {
                     const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-                    handlers._tokens.verifyToken(token,checkData.userPhone,(tokenIsValid) => {
+                    handlers._tokens.verifyToken(token,checkData.userName,(tokenIsValid) => {
                         if(tokenIsValid) {
                             // update check where needed
                             if(protocol) {checkData.protocol = protocol;}
@@ -543,21 +545,21 @@ handlers._checks.delete = (data,callback) => {
         _data.read('checks',id,(err,checkData) => {
             if(!err && checkData) {
                 const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-                handlers._tokens.verifyToken(token,checkData.userPhone,(tokenIsValid) => {
+                handlers._tokens.verifyToken(token,checkData.userName,(tokenIsValid) => {
                     if(tokenIsValid) {
                         // delete the check data
                         _data.delete('checks',id,(err) => {
                             if(!err) {
                                 // lookup and modify user
-                                _data.read('users', checkData.userPhone, (err,userData) => {
+                                _data.read('users', checkData.userName, (err,userData) => {
                                     if(!err && userData) {
                                        const userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];    
-                                       // remove delete check from list of checks
+                                       // remove deleted check from list of checks
                                        const checkPos = userChecks.indexOf(id);
                                        if(checkPos > -1) {
                                             userChecks.splice(checkPos,1);
                                             // re-save user
-                                            _data.update('users',checkData.userPhone,userData,(err) => {
+                                            _data.update('users',checkData.userName,userData,(err) => {
                                                 if(!err) {
                                                     callback(200);
                                                 } else {
@@ -599,8 +601,9 @@ handlers.pfactor = (data, callback) => {
 
 handlers.about = (data, callback) => {
     callback(200,{'name':'Pizza Lord Server 2018',
-                  'version':'0.1',
-                  'description':'early access!!'});
+                  'version':'beta 0.1',
+                  'description':'early access!!',
+                  'contact':'leif.v.anderson@gmail.com'});
 };
 
 handlers.ping = (data, callback) => {

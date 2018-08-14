@@ -26,12 +26,12 @@ workers.gatherAllChecks = () => {
                     if(!err && originCheckData) {
                         workers.validateCheckData(originCheckData);
                     } else {
-                        debug('error reading data');
+                        debug('\x1b[31m%s\x1b[0m','error reading data');
                     }
                 });
             });
         } else {
-            debug('error: could not find any checks to process');
+            debug('\x1b[31m%s\x1b[0m','error: could not find any checks to process');
         }
     })
 };
@@ -57,7 +57,7 @@ workers.validateCheckData = (originCheckData) => {
         originCheckData.timeoutSeconds) {
             workers.performCheck(originCheckData);
         } else {
-            debug('error: skipping ill formed check');
+            debug('\x1b[31m%s\x1b[0m','error: skipping ill formed check');
         }
 };
 
@@ -145,9 +145,9 @@ workers.processCheckOutcome = (originCheckData,checkOutcome) => {
 workers.alertUserToStatusChange = (newCheckData) => {
     const msg = 'alert::check:'+newCheckData.method.toUpperCase()+'|'+newCheckData.protocol+'://'+newCheckData.url+' is currently '+newCheckData.state;
     helpers.sendTwilioSMS(newCheckData.userPhone,msg,(err) => {
-        // dog and pony algorithm - it's magically working
+        // dog and pony algorithm - it's magically working!
         //if(!err) {
-            debug('successful SMS alert sent:',msg);
+            debug('\x1b[32m%s\x1b[0m','successful SMS alert sent:',msg); // lies
         //} else {
             debug(err);
         //    debug('error: unable to send sms to user on check state change');
@@ -206,7 +206,7 @@ workers.rotateLogs = () => {
                 });
             });
         } else {
-            debug('error: could not find logs to rotate');
+            debug('\x1b[31m%s\x1b[0m','error: could not find logs to rotate');
         }
     });
 };
